@@ -265,7 +265,7 @@ namespace shiva
             this->metadata = nlohmann::json::parse(response_string);
         }
 
-        void receiveCommand(int sock, int trail_size)
+        void receiveNamespace(int sock, int trail_size)
         {
             std::shared_ptr<uint8_t> response_array(new uint8_t[trail_size],
                                                     std::default_delete<uint8_t[]>());
@@ -281,7 +281,7 @@ namespace shiva
             }
 
             std::string response_string((char *)response_array.get(), trail_size);
-            this->command = response_string;
+            this->namespace_ = response_string;
         }
 
         void sendHeader(int sock)
@@ -299,35 +299,37 @@ namespace shiva
                 throw std::runtime_error("ShivaMessage sendMetadata failure");
         }
 
-        void sendCommand(int sock)
+        void sendNamespace(int sock)
         {
-            ssize_t size = (ssize_t)this->command.size();
-            if (send(sock, this->command.c_str(), size, 0) != size)
-                throw std::runtime_error("ShivaMessage sendCommand failure");
+            ssize_t size = (ssize_t)this->namespace_.size();
+            if (send(sock, this->namespace_.c_str(), size, 0) != size)
+                throw std::runtime_error("ShivaMessage sendNamespace failure");
         }
 
     public:
         MessageHeader buildHeader()
         {
             MessageHeader header(this->metadata.dump().size(), this->tensors.size(),
-                                 this->command.size());
+                                 this->namespace_.size());
             return header;
         }
         nlohmann::json metadata;
-        std::string command;
+        std::string namespace_;
         std::vector<std::shared_ptr<BaseTensor>> tensors;
 
-        ShivaMessage() : metadata(nlohmann::json::object()), command(""), tensors() {}
+        ShivaMessage() : metadata(nlohmann::json::object()), namespace_(""), tensors()
+        {
+        }
         ShivaMessage(const ShivaMessage &other)
         {
             this->metadata = other.metadata;
-            this->command = other.command;
+            this->namespace_ = other.namespace_;
             this->tensors = other.tensors;
         }
         ShivaMessage &operator=(const ShivaMessage &other)
         {
             this->metadata = other.metadata;
-            this->command = other.command;
+            this->namespace_ = other.namespace_;
             this->tensors = other.tensors;
             return *this;
         }
@@ -349,7 +351,7 @@ namespace shiva
                 returnMessage.tensors.push_back(tensor);
             }
             returnMessage.receiveMetadata(sock, returnHeader.metadata_size);
-            returnMessage.receiveCommand(sock, returnHeader.trail_size);
+            returnMessage.receiveNamespace(sock, returnHeader.trail_size);
             return returnMessage;
         }
 
@@ -363,7 +365,7 @@ namespace shiva
                 this->tensors[i]->sendData(sock);
             }
             this->sendMetadata(sock);
-            this->sendCommand(sock);
+            this->sendNamespace(sock);
         }
     };
 

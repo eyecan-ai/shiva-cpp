@@ -48,8 +48,8 @@ int main(int argc, char *argv[])
                              "tensor_3",
                          }}};
 
-    // set command (aka namespace)
-    message.command = "inference";
+    // set namespace
+    message.namespace_ = "inference";
 
     // add tensors to message
     message.tensors.push_back(tensor_1);
