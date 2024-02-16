@@ -8,10 +8,10 @@ namespace shiva
     class ShivaClient
     {
     public:
-        ShivaClient(std::string serverIp, unsigned short port)
+        ShivaClient(std::string serverIp, unsigned short serverPort)
         {
             this->serverIp = serverIp;
-            this->port = port;
+            this->serverPort = serverPort;
 
             // create TCP socket
             if ((m_sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
@@ -23,7 +23,7 @@ namespace shiva
             memset(&servAddr, 0, sizeof(servAddr));
             servAddr.sin_family = AF_INET;
             servAddr.sin_addr.s_addr = inet_addr(serverIp.c_str());
-            servAddr.sin_port = htons(port);
+            servAddr.sin_port = htons(serverPort);
 
             // connect to server
             if (connect(m_sock, (struct sockaddr *)&servAddr, sizeof(servAddr)) < 0)
@@ -46,7 +46,7 @@ namespace shiva
         }
 
         std::string serverIp;
-        unsigned short port;
+        unsigned short serverPort;
 
     private:
         int m_sock;
