@@ -183,6 +183,70 @@ namespace shiva
 
     class ShivaMessage
     {
+    public:
+        MessageHeader buildHeader()
+        {
+            MessageHeader header(this->metadata.dump().size(), this->tensors.size(),
+                                 this->namespace_.size());
+            return header;
+        }
+
+        ShivaMessage() : metadata(nlohmann::json::object()), namespace_(""), tensors()
+        {
+        }
+        ShivaMessage(const ShivaMessage &other)
+        {
+            this->metadata = other.metadata;
+            this->namespace_ = other.namespace_;
+            this->tensors = other.tensors;
+        }
+        ShivaMessage &operator=(const ShivaMessage &other)
+        {
+            this->metadata = other.metadata;
+            this->namespace_ = other.namespace_;
+            this->tensors = other.tensors;
+            return *this;
+        }
+
+        static ShivaMessage receive(int sock)
+        {
+            ShivaMessage returnMessage;
+            MessageHeader returnHeader = returnMessage.receiveHeader(sock);
+
+            for (int i = 0; i < returnHeader.n_tensors; i++)
+            {
+                TensorHeader th = returnMessage.receiveTensorHeader(sock);
+                std::vector<uint32_t> shape =
+                    returnMessage.receiveTensorShape(sock, th);
+
+                BaseTensorPtr tensor = returnMessage.receiveTensor(sock, th, shape);
+                tensor->header = th;
+                tensor->shape = shape;
+                returnMessage.tensors.push_back(tensor);
+            }
+            returnMessage.receiveMetadata(sock, returnHeader.metadata_size);
+            returnMessage.receiveNamespace(sock, returnHeader.trail_size);
+            return returnMessage;
+        }
+
+        void sendMessage(int sock)
+        {
+            this->sendHeader(sock);
+            for (size_t i = 0; i < this->tensors.size(); i++)
+            {
+                this->tensors[i]->sendHeader(sock);
+                this->tensors[i]->sendShape(sock);
+                this->tensors[i]->sendData(sock);
+            }
+            this->sendMetadata(sock);
+            this->sendNamespace(sock);
+        }
+
+        nlohmann::json metadata;
+        std::string namespace_;
+        std::vector<std::shared_ptr<BaseTensor>> tensors;
+
+    private:
         MessageHeader receiveHeader(int sock)
         {
             MessageHeader header;
@@ -305,70 +369,7 @@ namespace shiva
             if (send(sock, this->namespace_.c_str(), size, 0) != size)
                 throw std::runtime_error("ShivaMessage sendNamespace failure");
         }
-
-    public:
-        MessageHeader buildHeader()
-        {
-            MessageHeader header(this->metadata.dump().size(), this->tensors.size(),
-                                 this->namespace_.size());
-            return header;
-        }
-        nlohmann::json metadata;
-        std::string namespace_;
-        std::vector<std::shared_ptr<BaseTensor>> tensors;
-
-        ShivaMessage() : metadata(nlohmann::json::object()), namespace_(""), tensors()
-        {
-        }
-        ShivaMessage(const ShivaMessage &other)
-        {
-            this->metadata = other.metadata;
-            this->namespace_ = other.namespace_;
-            this->tensors = other.tensors;
-        }
-        ShivaMessage &operator=(const ShivaMessage &other)
-        {
-            this->metadata = other.metadata;
-            this->namespace_ = other.namespace_;
-            this->tensors = other.tensors;
-            return *this;
-        }
-
-        static ShivaMessage receive(int sock)
-        {
-            ShivaMessage returnMessage;
-            MessageHeader returnHeader = returnMessage.receiveHeader(sock);
-
-            for (int i = 0; i < returnHeader.n_tensors; i++)
-            {
-                TensorHeader th = returnMessage.receiveTensorHeader(sock);
-                std::vector<uint32_t> shape =
-                    returnMessage.receiveTensorShape(sock, th);
-
-                BaseTensorPtr tensor = returnMessage.receiveTensor(sock, th, shape);
-                tensor->header = th;
-                tensor->shape = shape;
-                returnMessage.tensors.push_back(tensor);
-            }
-            returnMessage.receiveMetadata(sock, returnHeader.metadata_size);
-            returnMessage.receiveNamespace(sock, returnHeader.trail_size);
-            return returnMessage;
-        }
-
-        void sendMessage(int sock)
-        {
-            this->sendHeader(sock);
-            for (size_t i = 0; i < this->tensors.size(); i++)
-            {
-                this->tensors[i]->sendHeader(sock);
-                this->tensors[i]->sendShape(sock);
-                this->tensors[i]->sendData(sock);
-            }
-            this->sendMetadata(sock);
-            this->sendNamespace(sock);
-        }
     };
-
 }
 
 #endif // SHIVA_MESSAGE_HPP

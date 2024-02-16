@@ -8,10 +8,13 @@ namespace shiva
     class ShivaClient
     {
     public:
-        ShivaClient(std::string server_address, unsigned short port)
+        ShivaClient(std::string serverIp, unsigned short port)
         {
+            this->serverIp = serverIp;
+            this->port = port;
+
             // create TCP socket
-            if ((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
+            if ((m_sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
                 throw std::runtime_error("ShivaClient socket creation failed");
 
             struct sockaddr_in servAddr;
@@ -19,16 +22,16 @@ namespace shiva
             // fill server address
             memset(&servAddr, 0, sizeof(servAddr));
             servAddr.sin_family = AF_INET;
-            servAddr.sin_addr.s_addr = inet_addr(server_address.c_str());
+            servAddr.sin_addr.s_addr = inet_addr(serverIp.c_str());
             servAddr.sin_port = htons(port);
 
             // connect to server
-            if (connect(sock, (struct sockaddr *)&servAddr, sizeof(servAddr)) < 0)
+            if (connect(m_sock, (struct sockaddr *)&servAddr, sizeof(servAddr)) < 0)
                 throw std::runtime_error("ShivaClient connect failed");
 
             // set TCP_NODELAY
             int enable_no_delay = 1;
-            if (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &enable_no_delay,
+            if (setsockopt(m_sock, IPPROTO_TCP, TCP_NODELAY, &enable_no_delay,
                            sizeof(int)) < 0)
                 throw std::runtime_error("ShivaClient setsockopt failed");
 
@@ -38,14 +41,15 @@ namespace shiva
 
         ShivaMessage sendAndReceiveMessage(ShivaMessage &message)
         {
-            message.sendMessage(this->sock);
-            return ShivaMessage::receive(this->sock);
+            message.sendMessage(m_sock);
+            return ShivaMessage::receive(m_sock);
         }
 
-    private:
-        int sock;
-        std::string server_address;
+        std::string serverIp;
         unsigned short port;
+
+    private:
+        int m_sock;
     };
 }
 
