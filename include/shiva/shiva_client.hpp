@@ -1,7 +1,7 @@
 #ifndef SHIVA_CLIENT_HPP
 #define SHIVA_CLIENT_HPP
 
-#include "shiva_message.hpp"
+#include "shiva/shiva_message.hpp"
 
 namespace shiva
 {

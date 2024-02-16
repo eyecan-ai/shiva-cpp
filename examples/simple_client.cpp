@@ -1,7 +1,7 @@
 #include <chrono>
 #include <iostream>
 
-#include "shiva_client.hpp"
+#include "shiva/shiva_client.hpp"
 
 template <typename DataType>
 std::shared_ptr<shiva::Tensor<DataType>> createTensor(std::vector<uint32_t> shape,
