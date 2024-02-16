@@ -177,10 +177,6 @@ namespace shiva
         }
     };
 
-    std::unordered_map<int8_t, std::type_index> TensorTypeMapInversed = {
-        {1, typeid(Tensor<float>)},
-    };
-
     class ShivaMessage
     {
     public:
