@@ -150,6 +150,9 @@ namespace shiva
 
         void receiveData(int sock)
         {
+            if (this->shape.size() == 0)
+                return;
+
             int elements = 1;
             // expected size is product of all shape elements * 4 bytes
             for (size_t i = 0; i < this->shape.size(); i++)
@@ -308,6 +311,9 @@ namespace shiva
 
         void receiveMetadata(int sock, int metadata_size)
         {
+            if (metadata_size == 0)
+                return;
+
             std::shared_ptr<uint8_t> response_array(new uint8_t[metadata_size],
                                                     std::default_delete<uint8_t[]>());
 
