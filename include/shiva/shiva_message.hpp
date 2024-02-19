@@ -28,11 +28,20 @@ namespace shiva
     } __attribute__((packed));
 
     std::unordered_map<std::type_index, int8_t> TensorTypeMap = {
-        {typeid(float), 1},      {typeid(double), 2},   {typeid(uint8_t), 3},
-        {typeid(int8_t), 4},     {typeid(uint16_t), 5}, {typeid(int16_t), 6},
-        {typeid(uint32_t), 7},   {typeid(int32_t), 8},  {typeid(uint64_t), 9},
-        {typeid(int64_t), 10},   {typeid(double), 11},  {typeid(long double), 12},
-        {typeid(long long), 13}, {typeid(bool), 17},
+        {typeid(float), 1},          // 32-bit floating point
+        {typeid(double), 2},         // 64-bit floating point
+        {typeid(unsigned char), 3},  // 8-bit unsigned integer
+        {typeid(char), 4},           // 8-bit signed integer
+        {typeid(unsigned short), 5}, // 16-bit unsigned integer
+        {typeid(short), 6},          // 16-bit signed integer
+        {typeid(unsigned int), 7},   // 32-bit unsigned integer
+        {typeid(int), 8},            // 32-bit signed integer
+        {typeid(unsigned long), 9},  // 64-bit unsigned integer
+        {typeid(long), 10},          // 64-bit signed integer
+        {typeid(double), 11},        // double
+        {typeid(long double), 12},   // long double
+        {typeid(long long), 13},     // long long
+        {typeid(unsigned char), 17}, // alias for bool, to avoid std::vector<bool>
     };
 
     struct MessageHeader
@@ -279,66 +288,55 @@ namespace shiva
                                     const std::vector<uint32_t> &shape)
         {
             BaseTensorPtr tensor;
-            if (th.dtype == 1)
+
+            switch (th.dtype)
             {
+            case 1:
                 tensor = std::make_shared<Tensor<float>>();
-            }
-            else if (th.dtype == 2)
-            {
+                break;
+            case 2:
                 tensor = std::make_shared<Tensor<double>>();
-            }
-            else if (th.dtype == 3)
-            {
-                tensor = std::make_shared<Tensor<uint8_t>>();
-            }
-            else if (th.dtype == 4)
-            {
-                tensor = std::make_shared<Tensor<int8_t>>();
-            }
-            else if (th.dtype == 5)
-            {
-                tensor = std::make_shared<Tensor<uint16_t>>();
-            }
-            else if (th.dtype == 6)
-            {
-                tensor = std::make_shared<Tensor<int16_t>>();
-            }
-            else if (th.dtype == 7)
-            {
-                tensor = std::make_shared<Tensor<uint32_t>>();
-            }
-            else if (th.dtype == 8)
-            {
-                tensor = std::make_shared<Tensor<int32_t>>();
-            }
-            else if (th.dtype == 9)
-            {
-                tensor = std::make_shared<Tensor<uint64_t>>();
-            }
-            else if (th.dtype == 10)
-            {
-                tensor = std::make_shared<Tensor<int64_t>>();
-            }
-            else if (th.dtype == 11)
-            {
+                break;
+            case 3:
+                tensor = std::make_shared<Tensor<unsigned char>>();
+                break;
+            case 4:
+                tensor = std::make_shared<Tensor<char>>();
+                break;
+            case 5:
+                tensor = std::make_shared<Tensor<unsigned short>>();
+                break;
+            case 6:
+                tensor = std::make_shared<Tensor<short>>();
+                break;
+            case 7:
+                tensor = std::make_shared<Tensor<unsigned int>>();
+                break;
+            case 8:
+                tensor = std::make_shared<Tensor<int>>();
+                break;
+            case 9:
+                tensor = std::make_shared<Tensor<unsigned long>>();
+                break;
+            case 10:
+                tensor = std::make_shared<Tensor<long>>();
+                break;
+            case 11:
                 tensor = std::make_shared<Tensor<double>>();
-            }
-            else if (th.dtype == 12)
-            {
+                break;
+            case 12:
                 tensor = std::make_shared<Tensor<long double>>();
-            }
-            else if (th.dtype == 13)
-            {
+                break;
+            case 13:
                 tensor = std::make_shared<Tensor<long long>>();
-            }
-            else if (th.dtype == 17)
-            {
-                tensor = std::make_shared<Tensor<bool>>();
-            }
-            else
-            {
-                throw std::runtime_error("Not implemented dtype " +
-                                         std::to_string(th.dtype));
+                break;
+            case 17:
+                tensor = std::make_shared<Tensor<unsigned char>>(); // alias for bool
+                break;
+            default:
+                throw std::runtime_error(
+                    "ShivaMessage receiveTensor error, not implemented dtype " +
+                    std::to_string(th.dtype));
             }
 
             tensor->header = th;
