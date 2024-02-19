@@ -122,6 +122,9 @@ namespace shiva
 
         void sendShape(int sock)
         {
+            if (this->shape.size() == 0)
+                return;
+
             std::vector<be_uint32_t> beshape =
                 std::vector<be_uint32_t>(this->shape.begin(), this->shape.end());
 
@@ -147,6 +150,9 @@ namespace shiva
 
         void sendData(int sock)
         {
+            if (this->data.size() == 0)
+                return;
+
             ssize_t size = (ssize_t)sizeof(T) * this->data.size();
             if (send(sock, &this->data[0], size, 0) != size)
                 throw std::runtime_error("Tensor sendData failure");
@@ -370,6 +376,9 @@ namespace shiva
 
         void receiveNamespace(int sock, int trail_size)
         {
+            if (trail_size == 0)
+                return;
+
             std::shared_ptr<uint8_t> response_array(new uint8_t[trail_size],
                                                     std::default_delete<uint8_t[]>());
 
