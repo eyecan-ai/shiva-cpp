@@ -278,34 +278,73 @@ namespace shiva
         BaseTensorPtr receiveTensor(int sock, const TensorHeader &th,
                                     const std::vector<uint32_t> &shape)
         {
-
             BaseTensorPtr tensor;
             if (th.dtype == 1)
             {
                 tensor = std::make_shared<Tensor<float>>();
-                tensor->header = th;
-                tensor->shape = shape;
-                tensor->receiveData(sock);
+            }
+            else if (th.dtype == 2)
+            {
+                tensor = std::make_shared<Tensor<double>>();
             }
             else if (th.dtype == 3)
             {
                 tensor = std::make_shared<Tensor<uint8_t>>();
-                tensor->header = th;
-                tensor->shape = shape;
-                tensor->receiveData(sock);
+            }
+            else if (th.dtype == 4)
+            {
+                tensor = std::make_shared<Tensor<int8_t>>();
+            }
+            else if (th.dtype == 5)
+            {
+                tensor = std::make_shared<Tensor<uint16_t>>();
+            }
+            else if (th.dtype == 6)
+            {
+                tensor = std::make_shared<Tensor<int16_t>>();
             }
             else if (th.dtype == 7)
             {
                 tensor = std::make_shared<Tensor<uint32_t>>();
-                tensor->header = th;
-                tensor->shape = shape;
-                tensor->receiveData(sock);
+            }
+            else if (th.dtype == 8)
+            {
+                tensor = std::make_shared<Tensor<int32_t>>();
+            }
+            else if (th.dtype == 9)
+            {
+                tensor = std::make_shared<Tensor<uint64_t>>();
+            }
+            else if (th.dtype == 10)
+            {
+                tensor = std::make_shared<Tensor<int64_t>>();
+            }
+            else if (th.dtype == 11)
+            {
+                tensor = std::make_shared<Tensor<double>>();
+            }
+            else if (th.dtype == 12)
+            {
+                tensor = std::make_shared<Tensor<long double>>();
+            }
+            else if (th.dtype == 13)
+            {
+                tensor = std::make_shared<Tensor<long long>>();
+            }
+            else if (th.dtype == 17)
+            {
+                tensor = std::make_shared<Tensor<bool>>();
             }
             else
             {
                 throw std::runtime_error("Not implemented dtype " +
                                          std::to_string(th.dtype));
             }
+
+            tensor->header = th;
+            tensor->shape = shape;
+            tensor->receiveData(sock);
+
             return tensor;
         }
 
