@@ -11,6 +11,8 @@
 #include <unistd.h>
 #include <unordered_map>
 
+#include "shiva/utils.hpp"
+
 namespace shiva
 {
     /**
@@ -149,8 +151,10 @@ namespace shiva
             if (this->data.size() == 0)
                 return;
 
-            ssize_t size = (ssize_t)sizeof(T) * this->data.size();
-            if (send(sock, &this->data[0], size, 0) != size)
+            std::vector<T> beData = utils::ToBigEndian(this->data);
+
+            ssize_t size = (ssize_t)sizeof(T) * beData.size();
+            if (send(sock, &beData[0], size, 0) != size)
                 throw std::runtime_error("Tensor sendData failure");
         }
 
@@ -180,9 +184,11 @@ namespace shiva
                 received_size += chunk_size;
             }
 
+            std::vector<T> beData = std::vector<T>(elements);
+            std::copy_n(received_data, elements, beData.begin());
+
             this->data.clear();
-            this->data = std::vector<T>(elements);
-            std::copy_n(received_data, elements, this->data.begin());
+            this->data = utils::FromBigEndian(beData);
         }
     };
 
