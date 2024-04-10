@@ -85,13 +85,6 @@ namespace shiva
     {
         uint8_t rank = 0;
         uint8_t dtype = 0;
-
-        void receive(int sock)
-        {
-            ssize_t size = (ssize_t)sizeof(TensorHeader);
-            if (recv(sock, this, size, 0) != size)
-                throw std::runtime_error("TensorHeader receive failure");
-        }
     };
 
     class BaseTensor
@@ -133,7 +126,6 @@ namespace shiva
                 throw std::runtime_error("BaseTensor sendShape failure");
         }
 
-        virtual void copyData(void *data) = 0;
         virtual void sendData(int sock) = 0;
         virtual void receiveData(int sock) = 0;
     };
@@ -156,11 +148,6 @@ namespace shiva
             ssize_t size = (ssize_t)sizeof(T) * this->data.size();
             if (send(sock, &this->data[0], size, 0) != size)
                 throw std::runtime_error("Tensor sendData failure");
-        }
-
-        void copyData(void *data)
-        {
-            std::copy_n(this->data.begin(), this->data.size(), (T *)data);
         }
 
         void receiveData(int sock)
