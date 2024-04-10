@@ -28,20 +28,24 @@ namespace shiva
     } __attribute__((packed));
 
     std::unordered_map<std::type_index, int8_t> TensorTypeMap = {
-        {typeid(float), 1},          // 32-bit floating point
-        {typeid(double), 2},         // 64-bit floating point
-        {typeid(uint8_t), 3},        // 8-bit unsigned integer
-        {typeid(int8_t), 4},         // 8-bit signed integer
-        {typeid(uint16_t), 5},       // 16-bit unsigned integer
-        {typeid(int16_t), 6},        // 16-bit signed integer
-        {typeid(uint32_t), 7},       // 32-bit unsigned integer
-        {typeid(int), 8},            // 32-bit signed integer
-        {typeid(unsigned long), 9},  // 64-bit unsigned integer
-        {typeid(long), 10},          // 64-bit signed integer
-        {typeid(double), 11},        // double
-        {typeid(long double), 12},   // long double
-        {typeid(long long), 13},     // long long
-        {typeid(unsigned char), 17}, // alias for bool, to avoid std::vector<bool>
+        {typeid(float), 1},         // 32-bit floating point
+        {typeid(uint8_t), 3},       // 8-bit unsigned integer
+        {typeid(int8_t), 4},        // 8-bit signed integer
+        {typeid(uint16_t), 5},      // 16-bit unsigned integer
+        {typeid(int16_t), 6},       // 16-bit signed integer
+        {typeid(uint32_t), 7},      // 32-bit unsigned integer
+        {typeid(int), 8},           // 32-bit signed integer
+        {typeid(unsigned long), 9}, // 64-bit unsigned integer
+        {typeid(long), 10},         // 64-bit signed integer
+        {typeid(double), 11},       // double
+        {typeid(long double), 12},  // long double
+        {typeid(long long), 13},    // long long
+
+        /*
+        The following entry has been removed since it was duplicated. It was originally
+        there following the Python implementation, but it turned out to be an error.
+        {typeid(double), 2}, // 64-bit floating point
+        */
     };
 
     struct MessageHeader
@@ -287,7 +291,7 @@ namespace shiva
             case 1:
                 tensor = std::make_shared<Tensor<float>>();
                 break;
-            case 2:
+            case 2: // this is here only for backwards compatibility, it is not used
                 tensor = std::make_shared<Tensor<double>>();
                 break;
             case 3:
@@ -322,9 +326,6 @@ namespace shiva
                 break;
             case 13:
                 tensor = std::make_shared<Tensor<long long>>();
-                break;
-            case 17:
-                tensor = std::make_shared<Tensor<unsigned char>>(); // alias for bool
                 break;
             default:
                 throw std::runtime_error(
