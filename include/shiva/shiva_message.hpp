@@ -30,11 +30,11 @@ namespace shiva
     std::unordered_map<std::type_index, int8_t> TensorTypeMap = {
         {typeid(float), 1},          // 32-bit floating point
         {typeid(double), 2},         // 64-bit floating point
-        {typeid(unsigned char), 3},  // 8-bit unsigned integer
-        {typeid(char), 4},           // 8-bit signed integer
-        {typeid(unsigned short), 5}, // 16-bit unsigned integer
-        {typeid(short), 6},          // 16-bit signed integer
-        {typeid(unsigned int), 7},   // 32-bit unsigned integer
+        {typeid(uint8_t), 3},        // 8-bit unsigned integer
+        {typeid(int8_t), 4},         // 8-bit signed integer
+        {typeid(uint16_t), 5},       // 16-bit unsigned integer
+        {typeid(int16_t), 6},        // 16-bit signed integer
+        {typeid(uint32_t), 7},       // 32-bit unsigned integer
         {typeid(int), 8},            // 32-bit signed integer
         {typeid(unsigned long), 9},  // 64-bit unsigned integer
         {typeid(long), 10},          // 64-bit signed integer
@@ -304,19 +304,19 @@ namespace shiva
                 tensor = std::make_shared<Tensor<double>>();
                 break;
             case 3:
-                tensor = std::make_shared<Tensor<unsigned char>>();
+                tensor = std::make_shared<Tensor<uint8_t>>();
                 break;
             case 4:
-                tensor = std::make_shared<Tensor<char>>();
+                tensor = std::make_shared<Tensor<int8_t>>();
                 break;
             case 5:
-                tensor = std::make_shared<Tensor<unsigned short>>();
+                tensor = std::make_shared<Tensor<uint16_t>>();
                 break;
             case 6:
-                tensor = std::make_shared<Tensor<short>>();
+                tensor = std::make_shared<Tensor<int16_t>>();
                 break;
             case 7:
-                tensor = std::make_shared<Tensor<unsigned int>>();
+                tensor = std::make_shared<Tensor<uint32_t>>();
                 break;
             case 8:
                 tensor = std::make_shared<Tensor<int>>();
