@@ -164,7 +164,7 @@ namespace shiva
                 return;
 
             int elements = 1;
-            // expected size is product of all shape elements * 4 bytes
+            // expected size is product of all shape elements * sizeof(T)
             for (size_t i = 0; i < this->shape.size(); i++)
             {
                 elements *= this->shape[i];
