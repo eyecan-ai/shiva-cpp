@@ -52,7 +52,7 @@ namespace utils
 
         std::vector<T> result;
         result.reserve(data.size());
-        for (auto it = data.rbegin(); it != data.rend(); ++it)
+        for (auto it = data.begin(); it != data.end(); ++it)
         {
             result.emplace_back(ToggleEndianness(*it));
         }
@@ -74,7 +74,7 @@ namespace utils
 
         std::vector<T> result;
         result.reserve(data.size());
-        for (auto it = data.rbegin(); it != data.rend(); ++it)
+        for (auto it = data.begin(); it != data.end(); ++it)
         {
             result.emplace_back(ToggleEndianness(*it));
         }
