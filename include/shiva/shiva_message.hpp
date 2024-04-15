@@ -11,6 +11,8 @@
 #include <unistd.h>
 #include <unordered_map>
 
+#include "shiva/utils.hpp"
+
 namespace shiva
 {
     /**
@@ -28,20 +30,24 @@ namespace shiva
     } __attribute__((packed));
 
     std::unordered_map<std::type_index, int8_t> TensorTypeMap = {
-        {typeid(float), 1},          // 32-bit floating point
-        {typeid(double), 2},         // 64-bit floating point
-        {typeid(unsigned char), 3},  // 8-bit unsigned integer
-        {typeid(char), 4},           // 8-bit signed integer
-        {typeid(unsigned short), 5}, // 16-bit unsigned integer
-        {typeid(short), 6},          // 16-bit signed integer
-        {typeid(unsigned int), 7},   // 32-bit unsigned integer
-        {typeid(int), 8},            // 32-bit signed integer
-        {typeid(unsigned long), 9},  // 64-bit unsigned integer
-        {typeid(long), 10},          // 64-bit signed integer
-        {typeid(double), 11},        // double
-        {typeid(long double), 12},   // long double
-        {typeid(long long), 13},     // long long
-        {typeid(unsigned char), 17}, // alias for bool, to avoid std::vector<bool>
+        {typeid(float), 1},         // 32-bit floating point
+        {typeid(uint8_t), 3},       // 8-bit unsigned integer
+        {typeid(int8_t), 4},        // 8-bit signed integer
+        {typeid(uint16_t), 5},      // 16-bit unsigned integer
+        {typeid(int16_t), 6},       // 16-bit signed integer
+        {typeid(uint32_t), 7},      // 32-bit unsigned integer
+        {typeid(int), 8},           // 32-bit signed integer
+        {typeid(unsigned long), 9}, // 64-bit unsigned integer
+        {typeid(long), 10},         // 64-bit signed integer
+        {typeid(double), 11},       // double
+        {typeid(long double), 12},  // long double
+        {typeid(long long), 13},    // long long
+
+        /*
+        The following entry has been removed since it was duplicated. It was originally
+        there following the Python implementation, but it turned out to be an error.
+        {typeid(double), 2}, // 64-bit floating point
+        */
     };
 
     struct MessageHeader
@@ -85,13 +91,6 @@ namespace shiva
     {
         uint8_t rank = 0;
         uint8_t dtype = 0;
-
-        void receive(int sock)
-        {
-            ssize_t size = (ssize_t)sizeof(TensorHeader);
-            if (recv(sock, this, size, 0) != size)
-                throw std::runtime_error("TensorHeader receive failure");
-        }
     };
 
     class BaseTensor
@@ -133,7 +132,6 @@ namespace shiva
                 throw std::runtime_error("BaseTensor sendShape failure");
         }
 
-        virtual void copyData(void *data) = 0;
         virtual void sendData(int sock) = 0;
         virtual void receiveData(int sock) = 0;
     };
@@ -153,14 +151,11 @@ namespace shiva
             if (this->data.size() == 0)
                 return;
 
-            ssize_t size = (ssize_t)sizeof(T) * this->data.size();
-            if (send(sock, &this->data[0], size, 0) != size)
-                throw std::runtime_error("Tensor sendData failure");
-        }
+            std::vector<T> beData = utils::ToBigEndian(this->data);
 
-        void copyData(void *data)
-        {
-            std::copy_n(this->data.begin(), this->data.size(), (T *)data);
+            ssize_t size = (ssize_t)sizeof(T) * beData.size();
+            if (send(sock, &beData[0], size, 0) != size)
+                throw std::runtime_error("Tensor sendData failure");
         }
 
         void receiveData(int sock)
@@ -169,7 +164,7 @@ namespace shiva
                 return;
 
             int elements = 1;
-            // expected size is product of all shape elements * 4 bytes
+            // expected size is product of all shape elements * sizeof(T)
             for (size_t i = 0; i < this->shape.size(); i++)
             {
                 elements *= this->shape[i];
@@ -189,9 +184,11 @@ namespace shiva
                 received_size += chunk_size;
             }
 
+            std::vector<T> beData = std::vector<T>(elements);
+            std::copy_n(received_data, elements, beData.begin());
+
             this->data.clear();
-            this->data = std::vector<T>(elements);
-            std::copy_n(received_data, elements, this->data.begin());
+            this->data = utils::FromBigEndian(beData);
         }
     };
 
@@ -300,23 +297,23 @@ namespace shiva
             case 1:
                 tensor = std::make_shared<Tensor<float>>();
                 break;
-            case 2:
+            case 2: // this is here only for backwards compatibility, it is not used
                 tensor = std::make_shared<Tensor<double>>();
                 break;
             case 3:
-                tensor = std::make_shared<Tensor<unsigned char>>();
+                tensor = std::make_shared<Tensor<uint8_t>>();
                 break;
             case 4:
-                tensor = std::make_shared<Tensor<char>>();
+                tensor = std::make_shared<Tensor<int8_t>>();
                 break;
             case 5:
-                tensor = std::make_shared<Tensor<unsigned short>>();
+                tensor = std::make_shared<Tensor<uint16_t>>();
                 break;
             case 6:
-                tensor = std::make_shared<Tensor<short>>();
+                tensor = std::make_shared<Tensor<int16_t>>();
                 break;
             case 7:
-                tensor = std::make_shared<Tensor<unsigned int>>();
+                tensor = std::make_shared<Tensor<uint32_t>>();
                 break;
             case 8:
                 tensor = std::make_shared<Tensor<int>>();
@@ -335,9 +332,6 @@ namespace shiva
                 break;
             case 13:
                 tensor = std::make_shared<Tensor<long long>>();
-                break;
-            case 17:
-                tensor = std::make_shared<Tensor<unsigned char>>(); // alias for bool
                 break;
             default:
                 throw std::runtime_error(
