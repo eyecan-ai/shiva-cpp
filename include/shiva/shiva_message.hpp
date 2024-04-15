@@ -151,7 +151,7 @@ namespace shiva
             if (this->data.size() == 0)
                 return;
 
-            std::vector<T> beData = utils::ToBigEndian(this->data);
+            std::vector<T> beData = shiva::utils::ToBigEndian(this->data);
 
             ssize_t size = (ssize_t)sizeof(T) * beData.size();
             if (send(sock, &beData[0], size, 0) != size)
@@ -188,7 +188,7 @@ namespace shiva
             std::copy_n(received_data, elements, beData.begin());
 
             this->data.clear();
-            this->data = utils::FromBigEndian(beData);
+            this->data = shiva::utils::FromBigEndian(beData);
         }
     };
 
