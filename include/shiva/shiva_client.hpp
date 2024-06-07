@@ -45,6 +45,10 @@ namespace shiva
             return ShivaMessage::receive(m_sock);
         }
 
+        void close() { ::close(m_sock); }
+
+        ~ShivaClient() { close(); }
+
         std::string serverIp;
         unsigned short serverPort;
 
