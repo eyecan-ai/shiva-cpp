@@ -13,7 +13,7 @@ namespace shiva
          *
          * @return true if the machine is big endian, false otherwise.
          */
-        bool IsBigEndianMachine()
+        inline bool IsBigEndianMachine()
         {
             unsigned int x = 1;
             return !(bool)*((char *)&x);
@@ -25,7 +25,7 @@ namespace shiva
          * @param value The value to toggle.
          * @return The value with the endianness toggled.
          */
-        template <typename T> T ToggleEndianness(const T &value)
+        template <typename T> inline T ToggleEndianness(const T &value)
         {
             T result;
             char *pValue = (char *)&value;
@@ -45,7 +45,8 @@ namespace shiva
          * @param data The data to convert.
          * @return The data in big endian.
          */
-        template <typename T> std::vector<T> ToBigEndian(const std::vector<T> &data)
+        template <typename T>
+        inline std::vector<T> ToBigEndian(const std::vector<T> &data)
         {
             if (IsBigEndianMachine())
             {
@@ -67,7 +68,8 @@ namespace shiva
          * @param data The data to convert.
          * @return The data in the machine's endianness.
          */
-        template <typename T> std::vector<T> FromBigEndian(const std::vector<T> &data)
+        template <typename T>
+        inline std::vector<T> FromBigEndian(const std::vector<T> &data)
         {
             if (IsBigEndianMachine())
             {
