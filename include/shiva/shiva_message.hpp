@@ -29,7 +29,7 @@ namespace shiva
         uint32_t be_val_;
     } __attribute__((packed));
 
-    std::unordered_map<std::type_index, int8_t> TensorTypeMap = {
+    inline std::unordered_map<std::type_index, int8_t> TensorTypeMap = {
         {typeid(float), 1},         // 32-bit floating point
         {typeid(uint8_t), 3},       // 8-bit unsigned integer
         {typeid(int8_t), 4},        // 8-bit signed integer
