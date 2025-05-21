@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
     }
 
     // create Shiva Client
-    shiva::ShivaClient client(argv[1], atoi(argv[2]));
+    shiva::ShivaClient client(argv[1], atoi(argv[2]), 2000);
 
     // create 3 random tensors
     shiva::Tensor<uint8_t>::Ptr tensor_1 = createTensor<uint8_t>({1920, 1080, 3});
