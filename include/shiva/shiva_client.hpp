@@ -8,10 +8,12 @@ namespace shiva
     class ShivaClient
     {
     public:
-        ShivaClient(std::string serverIp, unsigned short serverPort, int timeout_ms = 0)
+        ShivaClient(std::string serverIp, unsigned short serverPort, int timeoutMs = 0)
         {
             this->serverIp = serverIp;
             this->serverPort = serverPort;
+            this->timeoutMs = timeoutMs;
+            m_sock = -1;
 
             // create TCP socket
             if ((m_sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
@@ -35,12 +37,12 @@ namespace shiva
                            sizeof(int)) < 0)
                 throw std::runtime_error("ShivaClient setsockopt TCP_NODELAY failed");
 
-            if (timeout_ms > 0)
+            if (timeoutMs > 0)
             {
                 // set timeout (both send and receive)
                 struct timeval tv;
-                tv.tv_sec = timeout_ms / 1000;
-                tv.tv_usec = (timeout_ms % 1000) * 1000;
+                tv.tv_sec = timeoutMs / 1000;
+                tv.tv_usec = (timeoutMs % 1000) * 1000;
                 if (setsockopt(m_sock, SOL_SOCKET, SO_SNDTIMEO, (const char *)&tv,
                                sizeof(struct timeval)) < 0)
                     throw std::runtime_error(
@@ -61,12 +63,20 @@ namespace shiva
             return ShivaMessage::receive(m_sock);
         }
 
-        void close() { ::close(m_sock); }
+        void close()
+        {
+            if (m_sock > 0)
+            {
+                ::close(m_sock);
+                m_sock = -1;
+            }
+        }
 
         ~ShivaClient() { close(); }
 
         std::string serverIp;
         unsigned short serverPort;
+        int timeoutMs;
 
     private:
         int m_sock;
