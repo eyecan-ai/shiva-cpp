@@ -1,7 +1,11 @@
 #ifndef SHIVA_UTILS_HPP
 #define SHIVA_UTILS_HPP
 
+#include <errno.h>
+#include <sys/socket.h>
 #include <vector>
+
+#include "shiva/exceptions.hpp"
 
 namespace shiva
 {
@@ -83,6 +87,66 @@ namespace shiva
                 result.emplace_back(ToggleEndianness(*it));
             }
             return result;
+        }
+
+        /***
+         * Receive data from a socket.
+         *
+         * @param sock The socket to receive data from.
+         * @param buffer The buffer to store the received data.
+         * @param size The size of the data to receive.
+         * @param msg_name The name of the message being received.
+         */
+        inline void SocketRecv(int sock, uint8_t *buffer, int size,
+                               std::string msg_name)
+        {
+            int received_size = 0;
+            while (received_size < size)
+            {
+                int remains = size - received_size;
+                int chunk_size = recv(sock, buffer + received_size, remains, 0);
+                if (chunk_size <= 0)
+                {
+                    if (errno == EAGAIN || errno == EWOULDBLOCK)
+                    {
+                        std::string msg = "Timeout while receiving " + msg_name;
+                        throw ShivaTimeoutException(msg);
+                    }
+                    std::string msg = "Error while receiving " + msg_name;
+                    throw std::runtime_error(msg);
+                }
+                received_size += chunk_size;
+            }
+        }
+
+        /***
+         * Send data to a socket.
+         *
+         * @param sock The socket to send data to.
+         * @param buffer The buffer containing the data to send.
+         * @param size The size of the data to send.
+         * @param msg_name The name of the message being sent.
+         */
+        inline void SocketSend(int sock, const uint8_t *buffer, int size,
+                               std::string msg_name)
+        {
+            int sent_size = 0;
+            while (sent_size < size)
+            {
+                int remains = size - sent_size;
+                int chunk_size = send(sock, buffer + sent_size, remains, 0);
+                if (chunk_size <= 0)
+                {
+                    if (errno == EAGAIN || errno == EWOULDBLOCK)
+                    {
+                        std::string msg = "Timeout while sending " + msg_name;
+                        throw ShivaTimeoutException(msg);
+                    }
+                    std::string msg = "Error while sending " + msg_name;
+                    throw std::runtime_error(msg);
+                }
+                sent_size += chunk_size;
+            }
         }
     }
 }
