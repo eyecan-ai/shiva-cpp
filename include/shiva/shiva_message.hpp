@@ -115,8 +115,8 @@ namespace shiva
         {
             TensorHeader header = this->buildHeader();
             ssize_t size = (ssize_t)sizeof(TensorHeader);
-            if (send(sock, &header, size, 0) != size)
-                throw std::runtime_error("BaseTensor sendHeader failure");
+            shiva::utils::SocketSend(sock, (const uint8_t *)&header, size,
+                                     "TensorHeader");
         }
 
         void sendShape(int sock)
@@ -128,8 +128,8 @@ namespace shiva
                 std::vector<be_uint32_t>(this->shape.begin(), this->shape.end());
 
             ssize_t size = (ssize_t)sizeof(uint32_t) * beshape.size();
-            if (send(sock, &beshape[0], size, 0) != size)
-                throw std::runtime_error("BaseTensor sendShape failure");
+            shiva::utils::SocketSend(sock, (const uint8_t *)&beshape[0], size,
+                                     "TensorShape");
         }
 
         virtual void sendData(int sock) = 0;
@@ -154,8 +154,8 @@ namespace shiva
             std::vector<T> beData = shiva::utils::ToBigEndian(this->data);
 
             ssize_t size = (ssize_t)sizeof(T) * beData.size();
-            if (send(sock, &beData[0], size, 0) != size)
-                throw std::runtime_error("Tensor sendData failure");
+            shiva::utils::SocketSend(sock, (const uint8_t *)&beData[0], size,
+                                     "TensorData");
         }
 
         void receiveData(int sock)
@@ -174,18 +174,12 @@ namespace shiva
             std::shared_ptr<T> response_array(new T[expected_size],
                                               std::default_delete<T[]>());
 
-            T *received_data = response_array.get();
-            int received_size = 0;
-            while (received_size < expected_size)
-            {
-                int remains = expected_size - received_size;
-                int chunk_size =
-                    recv(sock, &(received_data)[received_size], remains, 0);
-                received_size += chunk_size;
-            }
+            T *recv_data = response_array.get();
+            shiva::utils::SocketRecv(sock, (uint8_t *)recv_data, expected_size,
+                                     "TensorData");
 
             std::vector<T> beData = std::vector<T>(elements);
-            std::copy_n(received_data, elements, beData.begin());
+            std::copy_n(recv_data, elements, beData.begin());
 
             this->data.clear();
             this->data = shiva::utils::FromBigEndian(beData);
@@ -262,8 +256,7 @@ namespace shiva
         {
             MessageHeader header;
             ssize_t size = (ssize_t)sizeof(MessageHeader);
-            if (recv(sock, &header, size, 0) != size)
-                throw std::runtime_error("ShivaMessage receiveHeader failure");
+            shiva::utils::SocketRecv(sock, (uint8_t *)&header, size, "MessageHeader");
             return header;
         }
 
@@ -271,8 +264,7 @@ namespace shiva
         {
             TensorHeader header;
             ssize_t size = (ssize_t)sizeof(TensorHeader);
-            if (recv(sock, &header, size, 0) != size)
-                throw std::runtime_error("ShivaMessage receiveTensorHeader failure");
+            shiva::utils::SocketRecv(sock, (uint8_t *)&header, size, "TensorHeader");
             return header;
         }
 
@@ -281,8 +273,7 @@ namespace shiva
 
             std::vector<be_uint32_t> beshape(th.rank);
             ssize_t size = (ssize_t)sizeof(be_uint32_t) * th.rank;
-            if (recv(sock, &beshape[0], size, 0) != size)
-                throw std::runtime_error("ShivaMessage receiveTensorShape failure");
+            shiva::utils::SocketRecv(sock, (uint8_t *)&beshape[0], size, "TensorShape");
             std::vector<uint32_t> shape(beshape.begin(), beshape.end());
             return shape;
         }
@@ -355,14 +346,7 @@ namespace shiva
                                                     std::default_delete<uint8_t[]>());
 
             uint8_t *received_data = response_array.get();
-            int received_size = 0;
-            while (received_size < metadata_size)
-            {
-                int remains = metadata_size - received_size;
-                int chunk_size =
-                    recv(sock, &(received_data)[received_size], remains, 0);
-                received_size += chunk_size;
-            }
+            shiva::utils::SocketRecv(sock, received_data, metadata_size, "Metadata");
 
             std::string response_string((char *)response_array.get(), metadata_size);
             this->metadata = nlohmann::json::parse(response_string);
@@ -377,14 +361,8 @@ namespace shiva
                                                     std::default_delete<uint8_t[]>());
 
             uint8_t *received_data = response_array.get();
-            int received_size = 0;
-            while (received_size < trail_size)
-            {
-                int remains = trail_size - received_size;
-                int chunk_size =
-                    recv(sock, &(received_data)[received_size], remains, 0);
-                received_size += chunk_size;
-            }
+
+            shiva::utils::SocketRecv(sock, received_data, trail_size, "Namespace");
 
             std::string response_string((char *)response_array.get(), trail_size);
             this->namespace_ = response_string;
@@ -394,22 +372,23 @@ namespace shiva
         {
             MessageHeader header = this->buildHeader();
             ssize_t size = (ssize_t)sizeof(MessageHeader);
-            if (send(sock, &header, size, 0) != size)
-                throw std::runtime_error("ShivaMessage sendHeader failure");
+            shiva::utils::SocketSend(sock, (const uint8_t *)&header, size,
+                                     "MessageHeader");
         }
 
         void sendMetadata(int sock)
         {
-            ssize_t size = (ssize_t)this->metadata.dump().size();
-            if (send(sock, this->metadata.dump().c_str(), size, 0) != size)
-                throw std::runtime_error("ShivaMessage sendMetadata failure");
+            std::string mdata_str = this->metadata.dump();
+            ssize_t size = (ssize_t)mdata_str.size();
+            const uint8_t *data = (const uint8_t *)mdata_str.c_str();
+            shiva::utils::SocketSend(sock, data, size, "Metadata");
         }
 
         void sendNamespace(int sock)
         {
             ssize_t size = (ssize_t)this->namespace_.size();
-            if (send(sock, this->namespace_.c_str(), size, 0) != size)
-                throw std::runtime_error("ShivaMessage sendNamespace failure");
+            const uint8_t *data = (const uint8_t *)this->namespace_.c_str();
+            shiva::utils::SocketSend(sock, data, size, "Namespace");
         }
     };
 }
